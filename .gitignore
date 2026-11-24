@@ -1,0 +1,19 @@
+# Build outputs
+**/bin/
+**/obj/
+dist/
+release/
+publish/
+
+# Temp workspace & backups
+JB/
+*.orig.bak
+*.tmp
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+*.user
+Thumbs.db
+desktop.ini
