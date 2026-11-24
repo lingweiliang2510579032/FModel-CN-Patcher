@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal EnableExtensions DisableDelayedExpansion
-title FModel 一键通用全汉化与更新修复工具 v1.0.0
+title FModel 一键通用全汉化与更新修复工具 v1.0.1
 
 set "SCRIPT_DIR=%~dp0"
 set "PATCHER=%SCRIPT_DIR%tools\FModelCnPatcher.exe"
@@ -10,7 +10,7 @@ set "TARGET=%~1"
 set "NO_PAUSE=%~2"
 
 echo ============================================================
-echo   FModel 通用全汉化 ^& 更新检测修复工具 v1.0.0
+echo   FModel 通用全汉化 ^& 更新检测修复工具 v1.0.1
 echo   支持官方任意版本 FModel.exe ^& 自动保留原版备份以便随时还原
 echo ============================================================
 echo.

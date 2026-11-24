@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal EnableExtensions DisableDelayedExpansion
-title FModel 一键还原官方英文原版 v1.0.0
+title FModel 一键还原官方英文原版 v1.0.1
 
 set "SCRIPT_DIR=%~dp0"
 set "PATCHER=%SCRIPT_DIR%tools\FModelCnPatcher.exe"
@@ -9,7 +9,7 @@ set "TARGET=%~1"
 set "NO_PAUSE=%~2"
 
 echo ============================================================
-echo   FModel 一键还原官方英文原版工具 v1.0.0
+echo   FModel 一键还原官方英文原版工具 v1.0.1
 echo   通过 *.orig.bak 无损还原为官方原版（哈希 100%% 一致）
 echo ============================================================
 echo.

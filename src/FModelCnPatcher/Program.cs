@@ -21,6 +21,7 @@ internal static class Program
         string targetExe = Path.GetFullPath(args[1]);
         string? langPath = null;
         bool noUpdateFix = false;
+        bool keepWpfHw = false;
 
         for (int i = 2; i < args.Length; i++)
         {
@@ -31,6 +32,10 @@ internal static class Program
             else if (args[i] == "--no-update-fix")
             {
                 noUpdateFix = true;
+            }
+            else if (args[i] == "--keep-wpf-hw")
+            {
+                keepWpfHw = true;
             }
         }
 
@@ -44,7 +49,7 @@ internal static class Program
         {
             return cmd switch
             {
-                "patch" => RunPatch(targetExe, langPath, noUpdateFix),
+                "patch" => RunPatch(targetExe, langPath, noUpdateFix, keepWpfHw),
                 "restore" => RunRestore(targetExe),
                 "inspect" => RunInspect(targetExe),
                 _ => InvalidCmd(cmd)
@@ -66,9 +71,9 @@ internal static class Program
 
     private static void PrintUsage()
     {
-        Console.WriteLine("FModel 通用全汉化与更新检测修复工具 v1.0.0");
+        Console.WriteLine("FModel 通用全汉化与更新检测修复工具 v1.0.1");
         Console.WriteLine("用法:");
-        Console.WriteLine("  FModelCnPatcher patch   <FModel.exe路径> [--lang <zh-CN.json路径>] [--no-update-fix]");
+        Console.WriteLine("  FModelCnPatcher patch   <FModel.exe路径> [--lang <zh-CN.json路径>] [--no-update-fix] [--keep-wpf-hw]");
         Console.WriteLine("  FModelCnPatcher restore <FModel.exe路径>");
         Console.WriteLine("  FModelCnPatcher inspect <FModel.exe路径>");
     }
@@ -108,7 +113,7 @@ internal static class Program
         return 0;
     }
 
-    private static int RunPatch(string targetExe, string? langPath, bool noUpdateFix)
+    private static int RunPatch(string targetExe, string? langPath, bool noUpdateFix, bool keepWpfHw)
     {
         langPath ??= Path.Combine(AppContext.BaseDirectory, "..", "lang", "zh-CN.json");
         langPath = Path.GetFullPath(langPath);
@@ -148,6 +153,7 @@ internal static class Program
         int codeReplaced = 0;
         int statusPatched = 0;
         bool fontPatched = false;
+        bool wpfFixed = false;
         var updateActions = new List<string>();
 
         // Prepare dnlib assembly resolver backed by entries inside this bundle
@@ -169,6 +175,9 @@ internal static class Program
 
             if (!noUpdateFix)
                 UpdateCheckFixer.Apply(mod, out updateActions);
+
+            if (!keepWpfHw)
+                wpfFixed = WpfRenderFixer.Apply(mod);
 
             using var outMs = new MemoryStream();
             mod.Write(outMs);
@@ -240,6 +249,7 @@ internal static class Program
         Console.WriteLine($"  - 枚举描述替换:     {enumReplaced} 处");
         Console.WriteLine($"  - 代码/3D界面词条:  {codeReplaced} 处 (状态栏补丁: {statusPatched})");
         Console.WriteLine($"  - 3D查看器中文字体: {(fontPatched ? "已注入微软雅黑 + CJK 字形范围" : "未找到 ImGui 入口（已跳过）")}");
+        Console.WriteLine($"  - WPF 防白屏修复:   {(wpfFixed ? "已启用 WPF 2D 软渲染（规避双显卡/驱动钩子 D3D9 白屏，不影响 3D 查看器硬件加速）" : "未启用")}");
         foreach (var act in updateActions)
             Console.WriteLine($"  - 更新修复:         {act}");
         Console.WriteLine($"  - 原版备份保存于:   {bakPath}");

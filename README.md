@@ -19,7 +19,10 @@
    - **静音启动阻塞弹窗**：抑制启动时强制弹出的模态 `UpdateView` 更新窗口及断网/限流报错弹窗（仍保留右下角状态栏更新状态指示）。
    - **避免 GitHub API 403 限流**：禁用 `LoadCoAuthors` 对 `api.github.com/users/{name}` 的高频并发请求。
    - **官方通道直连兜底**：在 `UpdateViewModel.LoadAsync` 结束后接入 `https://api.fmodel.app/v1/infos/Qa` 直连回退解析，解决国内/未登录环境下 GitHub API 限流导致更新界面显示 `No commits found`、点击下载无反应的问题。
-4. **100% 无损还原官方英文原版**
+4. **修复双显卡 / 虚拟显示器环境下 WPF 白屏（v1.0.1 新增）**
+   - 部分笔记本双显卡（核显+独显）、远程虚拟显示器或注入显卡驱动 Hook 的环境中，修改后的 `FModel.exe` 可能因未匹配原驱动配置导致 WPF Direct3D 9Ex 合成呈现纯白屏。
+   - 补丁器在 `App.OnStartup` 注入 `RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly`，彻底避免 2D 界面白屏；**3D 查看器（Snooper / OpenGL）仍运行在独立硬件加速窗口中，性能完全不受影响**（如需强制保留 WPF 硬件加速，可附加 `--keep-wpf-hw`）。
+5. **100% 无损还原官方英文原版**
    - 首次执行汉化时会在同目录自动备份 `FModel.exe.orig.bak`。
    - 随时运行 `还原官方英文原版.bat`，即可毫秒级无损恢复为字节与 SHA-256 完全一致的官方原版。
 
@@ -37,13 +40,14 @@
 ### 方式二：命令行调用
 
 ```cmd
-tools\FModelCnPatcher.exe patch   "C:\路径\FModel.exe" [--lang "lang\zh-CN.json"] [--no-update-fix]
+tools\FModelCnPatcher.exe patch   "C:\路径\FModel.exe" [--lang "lang\zh-CN.json"] [--no-update-fix] [--keep-wpf-hw]
 tools\FModelCnPatcher.exe restore "C:\路径\FModel.exe"
 tools\FModelCnPatcher.exe inspect "C:\路径\FModel.exe"
 ```
 
 - `--lang <路径>`：指定自定义 JSON 语言包（默认自动读取 `lang\zh-CN.json`）。
 - `--no-update-fix`：仅汉化界面与 3D 查看器字体，不修改更新检测逻辑。
+- `--keep-wpf-hw`：不注入 WPF `SoftwareOnly` 防白屏模式，保持原生 WPF D3D9 硬件加速。
 
 ## 目录结构
 
