@@ -11,6 +11,11 @@ public static partial class MetadataAndIlLocalizer
         "op_Equality", "op_Inequality", "Equals", "StartsWith", "EndsWith",
         "Contains", "IndexOf", "LastIndexOf", "Compare", "CompareOrdinal",
         "TryGetValue", "ContainsKey", "Add", "Remove",
+        "TryAdd", "GetValueOrDefault", "GetOrDefault",
+        "TryGetScalar", "TryGetVector", "TryGetTexture", "TryGetSwitch", "TryGetParameter",
+        "ToSoftObjectPath",
+        "OffsetOf", "GetField", "GetProperty", "GetMember", "GetEvent",
+        "GetNestedType", "GetType", "GetConstructor", "GetCustomAttribute",
         "RaisePropertyChanged", "OnPropertyChanged", "SetProperty",
         "SetUniform", "GetUniformLocation", "GetManifestResourceStream",
         "AddValidationError", "ClearValidationErrors"
@@ -197,6 +202,8 @@ public static partial class MetadataAndIlLocalizer
             return true;
         if (full.Contains(".Shaders", StringComparison.Ordinal) || full.Contains("EmbeddedShader", StringComparison.Ordinal))
             return true;
+        if (IsNonUiSnooperType(full) || IsNonUiSnooperType(rootFull))
+            return true;
 
         if (restrictToFModelUiNamespaces)
         {
@@ -212,10 +219,25 @@ public static partial class MetadataAndIlLocalizer
         return false;
     }
 
+    private static bool IsNonUiSnooperType(string typeName)
+    {
+        return typeName.StartsWith("Snooper.Core.Containers.Buffers.", StringComparison.Ordinal)
+            || typeName.StartsWith("Snooper.Extensions.", StringComparison.Ordinal)
+            || MatchesTypePrefix(typeName, "Snooper.Rendering.Cache.MaterialCache")
+            || MatchesTypePrefix(typeName, "Snooper.Rendering.Cache.JunoPaletteCache");
+    }
+
+    private static bool MatchesTypePrefix(string typeName, string prefix)
+    {
+        return typeName == prefix
+            || typeName.StartsWith(prefix + "/", StringComparison.Ordinal)
+            || typeName.StartsWith(prefix + ".", StringComparison.Ordinal);
+    }
+
     private static bool IsComparisonGuardTriggered(IList<Instruction> instrs, int idx)
     {
-        // Look ahead up to 2 instructions (handles e.g. ldstr; ldc.i4.5 [StringComparison]; callvirt String::Equals)
-        int limit = Math.Min(instrs.Count - 1, idx + 3);
+        // Look ahead up to 24 instructions (handles multi-arg calls, params string[] arrays, and generic MethodSpecs)
+        int limit = Math.Min(instrs.Count - 1, idx + 24);
         for (int j = idx + 1; j <= limit; j++)
         {
             var op = instrs[j].OpCode;
@@ -223,14 +245,21 @@ public static partial class MetadataAndIlLocalizer
             {
                 if (instrs[j].Operand is IMethod m)
                 {
-                    var mName = m.Name.String;
-                    var decl = m.DeclaringType?.FullName ?? string.Empty;
+                    var target = m is MethodSpec ms ? ms.Method : m;
+                    var mName = target?.Name.String ?? m.Name.String;
+                    var decl = target?.DeclaringType?.FullName ?? m.DeclaringType?.FullName ?? string.Empty;
                     if (GuardedMethodNames.Contains(mName))
                     {
                         return true;
                     }
-                    if (decl.Contains("Log", StringComparison.Ordinal) || mName == "ForContext" || mName == "GetMethod")
+                    if (decl == "System.Runtime.InteropServices.Marshal"
+                        || decl.Contains("AbstractPropertyHolder", StringComparison.Ordinal)
+                        || decl.Contains("Log", StringComparison.Ordinal)
+                        || mName == "ForContext"
+                        || mName == "GetMethod")
+                    {
                         return true;
+                    }
                 }
                 break;
             }
@@ -242,11 +271,21 @@ public static partial class MetadataAndIlLocalizer
             }
             if (op.FlowControl != FlowControl.Next && op.FlowControl != FlowControl.Meta)
                 break;
-            // Allow loading another string / int / StringComparison before comparison call
-            if (op != OpCodes.Ldstr && op != OpCodes.Ldc_I4 && op != OpCodes.Ldc_I4_S &&
+            // Allow loading operands / constructing params arrays before the consuming call
+            if (op != OpCodes.Ldstr && op != OpCodes.Ldnull && op != OpCodes.Dup &&
+                op != OpCodes.Stelem_Ref && op != OpCodes.Newarr &&
+                op != OpCodes.Ldc_I4 && op != OpCodes.Ldc_I4_S && op != OpCodes.Ldc_I4_M1 &&
                 op != OpCodes.Ldc_I4_0 && op != OpCodes.Ldc_I4_1 && op != OpCodes.Ldc_I4_2 &&
                 op != OpCodes.Ldc_I4_3 && op != OpCodes.Ldc_I4_4 && op != OpCodes.Ldc_I4_5 &&
-                op != OpCodes.Ldloc && op != OpCodes.Ldloc_0 && op != OpCodes.Ldloc_1 && op != OpCodes.Ldloc_2 && op != OpCodes.Ldloc_3 && op != OpCodes.Ldloc_S)
+                op != OpCodes.Ldc_I4_6 && op != OpCodes.Ldc_I4_7 && op != OpCodes.Ldc_I4_8 &&
+                op != OpCodes.Ldc_R4 &&
+                op != OpCodes.Ldloc && op != OpCodes.Ldloc_0 && op != OpCodes.Ldloc_1 &&
+                op != OpCodes.Ldloc_2 && op != OpCodes.Ldloc_3 && op != OpCodes.Ldloc_S &&
+                op != OpCodes.Ldloca && op != OpCodes.Ldloca_S &&
+                op != OpCodes.Ldarg && op != OpCodes.Ldarg_0 && op != OpCodes.Ldarg_1 &&
+                op != OpCodes.Ldarg_2 && op != OpCodes.Ldarg_3 && op != OpCodes.Ldarg_S &&
+                op != OpCodes.Ldarga && op != OpCodes.Ldarga_S &&
+                op != OpCodes.Ldfld && op != OpCodes.Ldflda && op != OpCodes.Ldsfld)
             {
                 break;
             }

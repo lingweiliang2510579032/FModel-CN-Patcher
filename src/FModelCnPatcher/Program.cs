@@ -71,7 +71,7 @@ internal static class Program
 
     private static void PrintUsage()
     {
-        Console.WriteLine("FModel 通用全汉化与更新检测修复工具 v1.0.1");
+        Console.WriteLine("FModel 通用全汉化与更新检测修复工具 v1.0.2");
         Console.WriteLine("用法:");
         Console.WriteLine("  FModelCnPatcher patch   <FModel.exe路径> [--lang <zh-CN.json路径>] [--no-update-fix] [--keep-wpf-hw]");
         Console.WriteLine("  FModelCnPatcher restore <FModel.exe路径>");

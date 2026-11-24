@@ -22,7 +22,9 @@
 4. **修复双显卡 / 虚拟显示器环境下 WPF 白屏（v1.0.1 新增）**
    - 部分笔记本双显卡（核显+独显）、远程虚拟显示器或注入显卡驱动 Hook 的环境中，修改后的 `FModel.exe` 可能因未匹配原驱动配置导致 WPF Direct3D 9Ex 合成呈现纯白屏。
    - 补丁器在 `App.OnStartup` 注入 `RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly`，彻底避免 2D 界面白屏；**3D 查看器（Snooper / OpenGL）仍运行在独立硬件加速窗口中，性能完全不受影响**（如需强制保留 WPF 硬件加速，可附加 `--keep-wpf-hw`）。
-5. **100% 无损还原官方英文原版**
+5. **非 UI 反射与属性查找字符串保护（v1.0.2 新增）**
+   - IL 汉化器增加反射/互操作（`Marshal.OffsetOf`）、UE 属性读取（`AbstractPropertyHolder`）与材质参数查找保护，并跳过非界面渲染缓冲与扩展模块，彻底修复 3D 查看器预览骨骼网格时因 `PerDrawStatic.Bounds` 被误替换导致的崩溃及材质参数解析异常。
+6. **100% 无损还原官方英文原版**
    - 首次执行汉化时会在同目录自动备份 `FModel.exe.orig.bak`。
    - 随时运行 `还原官方英文原版.bat`，即可毫秒级无损恢复为字节与 SHA-256 完全一致的官方原版。
 
